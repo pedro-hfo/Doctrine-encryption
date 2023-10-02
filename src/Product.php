@@ -15,6 +15,16 @@ class Product
     /** @Column(name="is_encrypted", type="boolean", options={"default":false}) **/
     private $isEncrypted = false;
 
+    public function __construct(
+        string $name, 
+        string $address, 
+        bool $isEncrypted = false
+    ) {
+        $this->name = $name;
+        $this->address = $address;
+        $this->isEncrypted = $isEncrypted;
+    }
+
     public function getId()
     {
         return $this->id;

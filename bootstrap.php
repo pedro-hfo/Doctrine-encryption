@@ -3,8 +3,8 @@ require_once "vendor/autoload.php";
 
 use Doctrine\ORM\Tools\Setup;
 use Doctrine\ORM\EntityManager;
-use App\Service\EncryptionService;
-use App\Service\ProductService;
+use App\Services\EncryptionService;
+use App\Services\ProductService;
 
 $isDevMode = true;
 $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $isDevMode);
@@ -20,7 +20,14 @@ $conn = array(
 
 $entityManager = EntityManager::create($conn, $config);
 
+$productService = new ProductService($entityManager);
+
 // Initialize the Encryption Service
 $keyPath = __DIR__ . '/test_key.key';
 $encryptionService = new EncryptionService($keyPath);
-$productService = new ProductService($entityManager, $encryptionService);
+
+// Registering the listener to the Doctrine EventManager
+$entityManager->getEventManager()->addEventListener(
+    ['prePersist', 'preUpdate', 'postLoad'],
+    $encryptionService
+);

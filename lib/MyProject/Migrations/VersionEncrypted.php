@@ -21,10 +21,9 @@ final class VersionEncrypted extends AbstractMigration
     {
         $conn = $this->connection;
         
-        require_once './src/Service/EncryptionService.php';
-        
+        require_once './src/Services/EncryptionService.php';
         $keyPath = './test_key.key';
-        $encryptionService = new \App\Service\EncryptionService($keyPath);
+        $encryptionService = new \App\Services\EncryptionService($keyPath);
         
         // Fetch All Products
         $stmt = $conn->executeQuery('SELECT id, address, is_encrypted FROM products');
@@ -46,10 +45,9 @@ final class VersionEncrypted extends AbstractMigration
     {
         $conn = $this->connection;
         
-        require_once './src/Service/EncryptionService.php';
-        
+        require_once './src/Services/EncryptionService.php';
         $keyPath = './test_key.key';
-        $encryptionService = new \App\Service\EncryptionService($keyPath);
+        $encryptionService = new \App\Services\EncryptionService($keyPath);
         
         // Fetch All Products
         $stmt = $conn->executeQuery('SELECT id, address, is_encrypted FROM products');

@@ -5,11 +5,11 @@ require_once "bootstrap.php";
 // Creating Product using ProductService
 $productName = 'My Product';
 $productAddress = 'Test address'; // This address will be encrypted by the ProductService
-$productId = $productService->createProduct($productName, $productAddress, false);
+$productId = $productService->createProduct($productName, $productAddress);
 echo "Created Product with ID " . $productId . "\n";
 
 // Retrieving Product using ProductService
-$product = $productService->getProductById($productId, false);
+$product = $productService->getProductById($productId);
 if ($product !== null) {
     echo "Retrieved Product with ID " . $product->getId() . " and Address " . $product->getAddress() . "\n";
 } else {
