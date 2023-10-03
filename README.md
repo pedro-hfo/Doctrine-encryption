@@ -82,8 +82,8 @@ If you try to migrate again to the same version, it will just be ignored, but th
 * **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
 * **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
 * **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
-* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve, and log that product with a plain text address.
-* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with encrypted address and retrieve and log that product with a plain text address.
+* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
+* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
 
 
 ## Project Overview
