@@ -10,7 +10,7 @@ return [
     ],
 
     'migrations_paths' => [
-        'MyProject\Migrations' => './lib/MyProject/Migrations',
+        'Migrations' => './Migrations',
     ],
 
     'all_or_nothing' => true,
