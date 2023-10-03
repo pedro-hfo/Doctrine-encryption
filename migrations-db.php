@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'dbname' => 'testdb',
-    'user' => 'test',
-    'password' => '123.',
+    'dbname' => 'yourdbname',
+    'user' => 'yourdbuser',
+    'password' => 'yourdbpassword',
     'host' => 'localhost',
     'driver' => 'pdo_pgsql',
 ];
