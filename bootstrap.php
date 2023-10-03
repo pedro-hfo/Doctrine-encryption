@@ -11,9 +11,9 @@ $config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $i
 
 // Database connection parameters
 $conn = array(
-    'dbname' => 'testdb',
-    'user' => 'test',
-    'password' => '123.',
+    'dbname' => 'yourdbname',
+    'user' => 'yourdbuser',
+    'password' => 'yourdbpassword',
     'host' => 'localhost',
     'driver' => 'pdo_pgsql',
 );
