@@ -41,7 +41,18 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     'driver' => 'pdo_pgsql',
 );` to the values chosen for your database.
 
-* With that setup you should be able to run test.php to insert and retrieve a product on the database, and see it encrypted if you inspect it through psql. 
+
+## Testing
+After the initial setup, you should be able to run the test scripts and migrations to see the process
+* Run test_encrypted.php
+    * There should be a product with an encrypted address in the table: 1 | My Product | MUIFAJvl... | t
+* Run test_unencrypted.php
+    * There should be a new product with a plain text address in the table: 2 | My Product | Test address | f
+* Run migration ` ./vendor/bin/doctrine-migrations migrate`
+    * All products should have encrypted addresses
+* For further testing you can run the reverse migration ` ./vendor/bin/doctrine-migrations migrate 0`
+    * All products should have unencrypted addresses
+
 
 
 ## Running migrations
@@ -70,8 +81,9 @@ If you try to migrate again to the same version, it will just be ignored, but th
 * **migrations.php** - Default migrations configuration and versions directory path.
 * **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
 * **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
-* **bootstrap.php** - "main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
-* **test.php** - test script that inserts a product into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address and retrieve and log that product with a plain text address.
+* **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
+* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve, and log that product with a plain text address.
+* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with encrypted address and retrieve and log that product with a plain text address.
 
 
 ## Project Overview
