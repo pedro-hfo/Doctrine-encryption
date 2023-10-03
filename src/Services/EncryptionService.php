@@ -53,7 +53,7 @@ class EncryptionService {
 
     private function handleEncryption(Product $product): void
     {
-        if(!$product->isEncrypted()){
+        if($product->shouldEncrypt && !$product->isEncrypted()){
             $address = $product->getAddress();
             $product->setAddress($this->encrypt($address));
             $product->setIsEncrypted(true);

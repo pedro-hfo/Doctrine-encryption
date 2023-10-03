@@ -8,21 +8,26 @@ class Product
 {
     /** @Id @Column(type="integer") @GeneratedValue **/
     protected $id;
+
     /** @Column(type="string") **/
     protected $name;
+
     /** @Column(type="string") **/
     protected $address;
+
     /** @Column(name="is_encrypted", type="boolean", options={"default":false}) **/
     private $isEncrypted = false;
+
+    public $shouldEncrypt = true;
 
     public function __construct(
         string $name, 
         string $address, 
-        bool $isEncrypted = false
+        bool $shouldEncrypt = true
     ) {
         $this->name = $name;
         $this->address = $address;
-        $this->isEncrypted = $isEncrypted;
+        $this->shouldEncrypt = $shouldEncrypt;
     }
 
     public function getId()

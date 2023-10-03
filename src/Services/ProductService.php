@@ -13,8 +13,8 @@ class ProductService {
         $this->entityManager = $entityManager;
     }
 
-    public function createProduct(string $name, string $address) {
-        $product = new Product($name, $address);
+    public function createProduct(string $name, string $address, bool $shouldEncrypt = true) {
+        $product = new Product($name, $address, $shouldEncrypt);
         
         $this->entityManager->persist($product);
         $this->entityManager->flush();
