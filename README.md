@@ -34,9 +34,9 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * Grant usage and select privileges on the products_id_seq sequence to your user `GRANT USAGE, SELECT ON SEQUENCE products_id_seq TO yourdbuser;`
 
 * Now in the bootstrap.php, change the values in `$conn = array(
-    'dbname' => 'testdb',
-    'user' => 'test',
-    'password' => '123.',
+    'dbname' => 'yourdbname',
+    'user' => 'yourdbuser',
+    'password' => 'yourdbpassword',
     'host' => 'localhost',
     'driver' => 'pdo_pgsql',
 );` to the values chosen for your database.
