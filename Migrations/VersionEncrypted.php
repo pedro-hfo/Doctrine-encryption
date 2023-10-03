@@ -14,13 +14,14 @@ final class VersionEncrypted extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Migration to encrypt/decrypt address on all rows';
     }
 
     public function up(Schema $schema) : void
     {
         $conn = $this->connection;
         
+        // Setup encryption service
         require_once './src/Services/EncryptionService.php';
         $keyPath = './test_key.key';
         $encryptionService = new \App\Services\EncryptionService($keyPath);
@@ -33,7 +34,7 @@ final class VersionEncrypted extends AbstractMigration
             $address = $row['address'];
             $isEncrypted = $row['is_encrypted'];
             
-            // Check if the address is already encrypted
+            // Only do this if address isn't encrypted
             if (!$isEncrypted) {
                 $encryptedAddress = $encryptionService->encrypt($address);
                 $conn->update('products', ['address' => $encryptedAddress, 'is_encrypted' => 1], ['id' => $id]);
@@ -45,6 +46,7 @@ final class VersionEncrypted extends AbstractMigration
     {
         $conn = $this->connection;
         
+        // Setup encryption service
         require_once './src/Services/EncryptionService.php';
         $keyPath = './test_key.key';
         $encryptionService = new \App\Services\EncryptionService($keyPath);
@@ -57,7 +59,7 @@ final class VersionEncrypted extends AbstractMigration
             $address = $row['address'];
             $isEncrypted = $row['is_encrypted'];
             
-            // Check if the address is already encrypted
+            // Only do this if address isn't encrypted
             if ($isEncrypted) {
                 $unencryptedAddress = $encryptionService->decrypt($address);
                 $conn->update('products', ['address' => $unencryptedAddress, 'is_encrypted' => 0], ['id' => $id]);
