@@ -1,35 +1,53 @@
 <?php
 require_once "vendor/autoload.php";
 
-use Doctrine\ORM\Tools\Setup;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
-use App\Services\EncryptionService;
+use Doctrine\ORM\Tools\Setup;
+
+use App\Services\VaultService;
 use App\Services\ProductService;
 use App\Services\KeyManagementService;
+use App\Services\EncryptionService;
 
-$isDevMode = true;
-$config = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $isDevMode);
+use App\Util\DbSecretsHandler;
 
-// Database connection parameters
-$conn = array(
-    'dbname' => 'yourdbname',
-    'user' => 'yourdbuser',
-    'password' => 'yourdbpassword',
-    'host' => 'localhost',
-    'driver' => 'pdo_pgsql',
+$configs = require 'config.php';
+
+$vaultAddress = $configs['vaultAddress'];
+$vaultToken = $configs['vaultToken'];
+$vaultDbSecretsPath = $configs['vaultDbSecretsPath'];
+$vaultSecretKeyPath = $configs['vaultSecretKeyPath'];
+
+$vaultService = new VaultService($vaultAddress, $vaultToken);
+
+try {
+    echo "Trying to retrieve db secrets from Vault\n";
+    $dbValues = $vaultService->getSecret($vaultDbSecretsPath);
+    echo "Successfully retrieved db secrets\n";
+}
+catch (GuzzleHttp\Exception\ClientException $e) {
+    echo "DB secrets not found, storing db values in vault\n";
+    $dbValues = (new DbSecretsHandler($vaultService, $configs['databaseSecrets']))->storeSecrets();
+}
+
+$connectionValues = array(
+    'dbname' => $dbValues['database'],
+    'user' => $dbValues['username'],
+    'password' => $dbValues['password'],
+    'host' => $dbValues['host'],
+    'driver' => $dbValues['driver'],
 );
 
-$entityManager = EntityManager::create($conn, $config);
+$isDevMode = true;
+$dbConfig = Setup::createAnnotationMetadataConfiguration(array(__DIR__."/src"), $isDevMode);
+
+$connection = DriverManager::getConnection($connectionValues);
+$entityManager = new EntityManager($connection, $dbConfig);
 
 $productService = new ProductService($entityManager);
 
-/*
-Vault credentials example for local server
-    Address - 'http://127.0.0.1:8200'
-    Root token - 'hvs.Vjo3S8ic1qJsOmXoVjfbvien' - given when initializing server
-    Vault key path - '/v1/secret/data/phpapp/encryption' - the part after data/ can be freely modified
-*/
-$keyService = new KeyManagementService('vaultAddressHere', 'rootTokenHere', 'vaultKeyPathHere');
+$keyService = new KeyManagementService($vaultService, $vaultSecretKeyPath);
 
 $encryptionService = new EncryptionService($keyService->getEncryptionKey());
 
