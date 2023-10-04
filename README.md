@@ -42,10 +42,10 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
 );` to the values chosen for your database.
 
 * Now install vault:
-    * wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    * echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    * sudo apt update 
-    * sudo apt install vault
+    * `wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg`
+    * `echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list`
+    * `sudo apt update `
+    * `sudo apt install vault`
 * And start a dev server: `vault server -dev`
 * On the response after launching the server, there should be a line like `Root Token: hvs.Vjo3S8ic1qJsOmXoVjfbvien`.
 * In bootstrap.php, change the values in `$keyService = new KeyManagementService('vaultAddressHere', 'rootTokenHere', 'vaultKeyPathHere');` to valid ones (based on the commented code and the root token given by vault)
