@@ -1,6 +1,6 @@
 # Doctrine-encryption-test 
 
-This repository serves as an example of how to use encryption with [Doctrine](https://www.doctrine-project.org/) in PHP 8.2 using [ParagonIE Halite](https://github.com/paragonie/halite).
+This repository serves as an example of how to use encryption with [Doctrine](https://www.doctrine-project.org/) in PHP 8.2 using [ParagonIE Halite](https://github.com/paragonie/halite) and using [HashiCorp Vault](https://developer.hashicorp.com/vault) to store secrets such as the encryption key and database credentials.
 
 
 ## Requirements
@@ -12,6 +12,7 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * doctrine/cache: \^1.11, 
     * paragonie/halite: \^5, 
     * doctrine/migrations: \^3.6
+* Hashicorp Vault version 1.15.0
 * This project assumes there is a PostgreSQL database accessible to the project.
 
 
@@ -33,13 +34,13 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * Grant all table privileges to your user: `GRANT ALL PRIVILEGES ON TABLE products TO yourdbuser`
     * Grant usage and select privileges on the products_id_seq sequence to your user `GRANT USAGE, SELECT ON SEQUENCE products_id_seq TO yourdbuser;`
 
-* In bootstrap.php, change the values in `$conn = array(
-    'dbname' => 'yourdbname',
-    'user' => 'yourdbuser',
-    'password' => 'yourdbpassword',
-    'host' => 'localhost',
-    'driver' => 'pdo_pgsql',
-);` to the values chosen for your database.
+* In config.php, change the values in `'databaseSecrets' => [
+        'database' => 'yourdbname',
+        'username' => 'yourdbuser',
+        'password' => 'yourdbpassword',
+        'host' => 'localhost',
+        'driver' => 'pdo_pgsql'
+    ]` to the values chosen for your database.
 
 * Now install vault:
     * `wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg`
@@ -47,8 +48,7 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * `sudo apt update `
     * `sudo apt install vault`
 * And start a dev server: `vault server -dev`
-* On the response after launching the server, there should be a line like `Root Token: hvs.Vjo3S8ic1qJsOmXoVjfbvien`.
-* In bootstrap.php, change the values in `$keyService = new KeyManagementService('vaultAddressHere', 'rootTokenHere', 'vaultKeyPathHere');` to valid ones (based on the commented code and the root token given by vault)
+* On the response after launching the server, there should be a line like `Root Token: hvs.rveKCwef2HSPS3ej3UCV3mSU`, change the vaultToken in config.php to this token.
 
 
 
@@ -89,6 +89,7 @@ If you try to migrate again to the same version, it will just be ignored, but th
 * **KeyManagementService.php** - Service that handles the cryptographic key. It tries to retrieve it from vault and, if it doesn't exist, generates a new one and saves it there
     * The key path in vault is given when initializing this service
     * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
+* **VaultService.php** - Service that uses GuzzleHTTP to 
 * **migrations.php** - Default migrations configuration and versions directory path.
 * **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
 * **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
@@ -102,7 +103,8 @@ If you try to migrate again to the same version, it will just be ignored, but th
 This project uses Doctrine with the [ParagonIE Halite encryption library](https://github.com/paragonie/halite) to encrypt data in a PostgreSQL database:
 * **Database connection**: Uses Doctrine to connect with a PostgreSQL database.
 * **Entity management**: Sample entity where the address field is encrypted on the database. The `is_encrypted` field indicates the encryption status of the data.
-* **Key Management**: Uses `KeyManagementService.php` to retrieve a key from vault (and creates a new one if non existent) to be used by EncryptionService.php.
+* **Vault Management**: Uses `VaultService.php` to store and retrieve secrets from vault.
+* **Key Management**: Uses `KeyManagementService.php` and `VaultService.php` to retrieve a key from vault (and creates a new one if non existent) to be used by EncryptionService.php.
 * **Encryption/Decryption Process**: Happens during Doctrine lifecycle events.
     * prePersist and preUpdate: encrypts address and sets is_encrypted to true.
     * postLoad: decrypts address and sets is_encrypted to false in memory, so that it works correctly if later used to update the row.
