@@ -34,13 +34,13 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * Grant all table privileges to your user: `GRANT ALL PRIVILEGES ON TABLE products TO yourdbuser`
     * Grant usage and select privileges on the products_id_seq sequence to your user `GRANT USAGE, SELECT ON SEQUENCE products_id_seq TO yourdbuser;`
 
-* In config.php, change the values in `'databaseSecrets' => [
-        'database' => 'yourdbname',
-        'username' => 'yourdbuser',
-        'password' => 'yourdbpassword',
-        'host' => 'localhost',
-        'driver' => 'pdo_pgsql'
-    ]` to the values chosen for your database.
+* In db-secrets.json, change the values in `"data": {
+        "database": "yourdbname",
+        "username": "yourdbuser",
+        "password": "yourdbpassword",
+        "host": "localhost",
+        "driver": "pdo_pgsql"
+    }` to the values chosen for your database.
 
 * Now install vault:
     * `wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg`
@@ -49,6 +49,10 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     * `sudo apt install vault`
 * And start a dev server: `vault server -dev`
 * On the response after launching the server, there should be a line like `Root Token: hvs.rveKCwef2HSPS3ej3UCV3mSU`, change the vaultToken in config.php to this token.
+* Then use that token to login to vault
+    * Set VAULT_ADDR env variable: `export VAULT_ADDR='http://127.0.0.1:8200'`
+    * Login to vault `vault login hvs.rveKCwef2HSPS3ej3UCV3mSU`
+* After logging in to vault, write the db connection values in db-secrets.json to vault: `vault write secret/data/phpapp/database-config @db-secrets.json`. If you change the vaultDbSecretsPath in config.php, remember to change this command accordingly.
 
 
 
@@ -93,6 +97,7 @@ If you try to migrate again to the same version, it will just be ignored, but th
 * **migrations.php** - Default migrations configuration and versions directory path.
 * **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
 * **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
+* **config.php** - Config file with config values for vault.
 * **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
 * **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
 * **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
