@@ -14,8 +14,8 @@ class EncryptionService {
 
     private $key;
 
-    public function __construct(string $keyPath) {
-        $this->key = KeyFactory::loadEncryptionKey($keyPath);
+    public function __construct(string $rawKey) {
+        $this->key = KeyFactory::importEncryptionKey(new HiddenString($rawKey));
     }
 
     public function encrypt(string $data): string {
