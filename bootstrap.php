@@ -16,8 +16,8 @@ $configs = require 'config.php';
 
 $vaultAddress = $configs['vaultAddress'];
 $vaultToken = $configs['vaultToken'];
-$vaultDbSecretsPath = $configs['vaultDbSecretsPath'];
-$vaultSecretKeyPath = $configs['vaultSecretKeyPath'];
+$vaultDbSecretsPath = $configs ['baseVaultPath'] . $configs['vaultDbSecretsPath'];
+$vaultSecretKeyPath = $configs ['baseVaultPath'] . $configs['vaultSecretKeyPath'];
 
 $vaultService = new VaultService($vaultAddress, $vaultToken);
 
