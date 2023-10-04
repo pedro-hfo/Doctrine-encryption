@@ -10,8 +10,6 @@ use App\Services\ProductService;
 use App\Services\KeyManagementService;
 use App\Services\EncryptionService;
 
-use App\Util\DbSecretsHandler;
-
 $configs = require 'config.php';
 
 $vaultAddress = $configs['vaultAddress'];
@@ -21,15 +19,9 @@ $vaultSecretKeyPath = $configs ['baseVaultPath'] . $configs['vaultSecretKeyPath'
 
 $vaultService = new VaultService($vaultAddress, $vaultToken);
 
-try {
-    echo "Trying to retrieve db secrets from Vault\n";
-    $dbValues = $vaultService->getSecret($vaultDbSecretsPath);
-    echo "Successfully retrieved db secrets\n";
-}
-catch (GuzzleHttp\Exception\ClientException $e) {
-    echo "DB secrets not found, storing db values in vault\n";
-    $dbValues = (new DbSecretsHandler($vaultService, $configs['databaseSecrets']))->storeSecrets();
-}
+echo "Trying to retrieve db secrets from Vault\n";
+$dbValues = $vaultService->getSecret($vaultDbSecretsPath);
+echo "Successfully retrieved db secrets\n";
 
 $connectionValues = array(
     'dbname' => $dbValues['database'],
