@@ -17,6 +17,37 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
 
 
 
+## Project Overview
+This project uses Doctrine with the [ParagonIE Halite encryption library](https://github.com/paragonie/halite) to encrypt data in a PostgreSQL database:
+* **Database connection**: Uses Doctrine to connect with a PostgreSQL database.
+* **Entity management**: Sample entity where the address field is encrypted on the database. The `is_encrypted` field indicates the encryption status of the data.
+* **Vault Management**: Uses `VaultService.php` to store and retrieve secrets from vault.
+* **Key Management**: Uses `KeyManagementService.php` and `VaultService.php` to retrieve a key from vault (and creates a new one if non existent) to be used by EncryptionService.php.
+* **Encryption/Decryption Process**: Happens during Doctrine lifecycle events.
+    * prePersist and preUpdate: encrypts address and sets is_encrypted to true.
+    * postLoad: decrypts address and sets is_encrypted to false in memory, so that it works correctly if later used to update the row.
+* **Migration process**: Uses Doctrine Migrations to manage migrations, encrypting/decrypting existing data in this case.
+
+
+
+## Project structure
+* **src/Product.php** - Product entity mapped to the database through doctrine.
+* **services/ProductService.php** - Service to persist and retrieve products.
+* **services/EncryptionService.php** - Service that handles encryption/decryption and doctrine lifecycle callbacks.
+* **KeyManagementService.php** - Service that handles the cryptographic key. It tries to retrieve it from vault and, if it doesn't exist, generates a new one and saves it there
+    * The key path in vault is given when initializing this service
+    * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
+* **VaultService.php** - Service that uses GuzzleHTTP to 
+* **migrations.php** - Default migrations configuration and versions directory path.
+* **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
+* **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
+* **config.php** - Config file with config values for vault.
+* **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
+* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
+* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
+
+
+
 ## Minimal project setup
 * Run composer install.
 
@@ -83,37 +114,6 @@ The reverse migration is also implemented, using the down method. In this case i
 If you try to migrate again to the same version, it will just be ignored, but this can be bypassed by altering the doctrine_migration_versions, which holds the current db version. If you truncate this table (or remove rows in projects with more than one migration) you can run the same migration multiple times in a row without needing to run the reverse migration to change the DB version.
 
 **One very important thing to note is that this project uses the is_encrypted field to indicate if the relevant columns on the row are encrypted or not, so it shouldn't be changed outside of the migration or other encryption/decryption processes.**
-
-
-
-## Project structure
-* **src/Product.php** - Product entity mapped to the database through doctrine.
-* **services/ProductService.php** - Service to persist and retrieve products.
-* **services/EncryptionService.php** - Service that handles encryption/decryption and doctrine lifecycle callbacks.
-* **KeyManagementService.php** - Service that handles the cryptographic key. It tries to retrieve it from vault and, if it doesn't exist, generates a new one and saves it there
-    * The key path in vault is given when initializing this service
-    * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
-* **VaultService.php** - Service that uses GuzzleHTTP to 
-* **migrations.php** - Default migrations configuration and versions directory path.
-* **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
-* **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
-* **config.php** - Config file with config values for vault.
-* **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
-* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
-* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
-
-
-
-## Project Overview
-This project uses Doctrine with the [ParagonIE Halite encryption library](https://github.com/paragonie/halite) to encrypt data in a PostgreSQL database:
-* **Database connection**: Uses Doctrine to connect with a PostgreSQL database.
-* **Entity management**: Sample entity where the address field is encrypted on the database. The `is_encrypted` field indicates the encryption status of the data.
-* **Vault Management**: Uses `VaultService.php` to store and retrieve secrets from vault.
-* **Key Management**: Uses `KeyManagementService.php` and `VaultService.php` to retrieve a key from vault (and creates a new one if non existent) to be used by EncryptionService.php.
-* **Encryption/Decryption Process**: Happens during Doctrine lifecycle events.
-    * prePersist and preUpdate: encrypts address and sets is_encrypted to true.
-    * postLoad: decrypts address and sets is_encrypted to false in memory, so that it works correctly if later used to update the row.
-* **Migration process**: Uses Doctrine Migrations to manage migrations, encrypting/decrypting existing data in this case.
 
 
 
