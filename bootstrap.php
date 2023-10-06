@@ -13,11 +13,13 @@ use App\Services\EncryptionService;
 $configs = require 'config.php';
 
 $vaultAddress = $configs['vaultAddress'];
-$vaultToken = $configs['vaultToken'];
+$roleName = $configs['roleName'];
+$roleId = $configs['roleId'];
 $vaultDbSecretsPath = $configs ['baseVaultPath'] . $configs['vaultDbSecretsPath'];
 $vaultSecretKeyPath = $configs ['baseVaultPath'] . $configs['vaultSecretKeyPath'];
+$vaultToken = getenv('VAULT_TOKEN');
 
-$vaultService = new VaultService($vaultAddress, $vaultToken);
+$vaultService = new VaultService($vaultAddress, $vaultToken, $roleName, $roleId);
 
 echo "Trying to retrieve db secrets from Vault\n";
 $dbValues = $vaultService->getSecret($vaultDbSecretsPath);
