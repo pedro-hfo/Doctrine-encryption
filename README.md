@@ -91,7 +91,7 @@ The migration available in this project goes through all the rows and encrypts a
 
 The reverse migration is also implemented, using the down method. In this case it goes through all the rows and unencrypts the address field when it is encrypted. This is run when migrating to a version before this one or to the base DB version before migrations.
 
-If you try to migrate again to the same version, it will just be ignored, but this can be bypassed by altering the `doctrine_migration_versions`, which holds the current db version. If you truncate this table (or remove rows in projects with more than one migration) you can run the same migration multiple times in a row without needing to run the reverse migration to change the DB version.
+If you try to migrate again to the same version, it will just be ignored, but this can be bypassed by altering the `doctrine_migration_versions`, which holds the current db version. If you truncate this table (or remove specific rows in projects with more than one migration) you can run the same migration multiple times in a row without needing to run the reverse migration to change the DB version.
 
 **One very important thing to note is that this project uses the is_encrypted field to indicate if the relevant columns on the row are encrypted or not, so it shouldn't be changed outside of the migration or other encryption/decryption processes.**
 
