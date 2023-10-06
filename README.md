@@ -83,7 +83,7 @@ After the initial setup, you should be able to run the test scripts and migratio
 ## Running migrations
 This project uses [Doctrine Migrations](https://www.doctrine-project.org/projects/doctrine-migrations/en/3.6/reference/introduction.html) to manage database versions.
 
-The basic command for running migrations is `./vendor/bin/doctrine-migrations migrate`, this will check the Migrations folder for available migrations, then check those against the doctrine_migration_versions table, to decide if there are still migrations to be done. If there are, it will try to migrate sequentially to the latest version. 
+The basic command for running migrations is `./vendor/bin/doctrine-migrations migrate`, this will check the Migrations folder for available migrations, then check those against the `doctrine_migration_versions` table, to decide if there are still migrations to be done. If there are, it will try to migrate sequentially to the latest version. 
 
 You can also run migrations to a specific version, in the case of this project `./vendor/bin/doctrine-migrations migrate Migrations\\VersionEncrypted` or reverse all migrations and go to the database state before any of them `./vendor/bin/doctrine-migrations migrate 0`
 
@@ -91,7 +91,7 @@ The migration available in this project goes through all the rows and encrypts a
 
 The reverse migration is also implemented, using the down method. In this case it goes through all the rows and unencrypts the address field when it is encrypted. This is run when migrating to a version before this one or to the base DB version before migrations.
 
-If you try to migrate again to the same version, it will just be ignored, but this can be bypassed by altering the doctrine_migration_versions, which holds the current db version. If you truncate this table (or remove rows in projects with more than one migration) you can run the same migration multiple times in a row without needing to run the reverse migration to change the DB version.
+If you try to migrate again to the same version, it will just be ignored, but this can be bypassed by altering the `doctrine_migration_versions`, which holds the current db version. If you truncate this table (or remove rows in projects with more than one migration) you can run the same migration multiple times in a row without needing to run the reverse migration to change the DB version.
 
 **One very important thing to note is that this project uses the is_encrypted field to indicate if the relevant columns on the row are encrypted or not, so it shouldn't be changed outside of the migration or other encryption/decryption processes.**
 
