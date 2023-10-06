@@ -16,6 +16,34 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
 
 
 
+## Project Overview
+This project uses Doctrine with the [ParagonIE Halite encryption library](https://github.com/paragonie/halite) to encrypt data in a PostgreSQL database:
+* **Database connection**: Uses Doctrine to connect with a PostgreSQL database.
+* **Entity management**: Sample entity where the address field is encrypted on the database. The `is_encrypted` field indicates the encryption status of the data.
+* **Key Management**: Uses `keyGeneration.php` to generate the encryption key, which should then be stored in a safe location and used in EncryptionService.php.
+* **Encryption/Decryption Process**: Happens during Doctrine lifecycle events.
+    * prePersist and preUpdate: encrypts address and sets is_encrypted to true.
+    * postLoad: decrypts address and sets is_encrypted to false in memory, so that it works correctly if later used to update the row.
+* **Migration process**: Uses Doctrine Migrations to manage migrations, encrypting/decrypting existing data in this case.
+
+
+
+## Project structure
+* **src/Product.php** - Product entity mapped to the database through doctrine.
+* **services/ProductService.php** - Service to persist and retrieve products.
+* **services/EncryptionService.php** - Service that handles encryption/decryption and doctrine lifecycle callbacks.
+* **keyGeneration.php** - Script to be run only once to generate the encryption key used by encryption service.
+    * The `KeyFactory::save($encKey, 'test_key.key');` line determines the key filename and directory.
+    * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
+* **migrations.php** - Default migrations configuration and versions directory path.
+* **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
+* **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
+* **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
+* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
+* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
+
+
+
 ## Minimal project setup
 * Run composer install.
 
@@ -40,6 +68,7 @@ This repository serves as an example of how to use encryption with [Doctrine](ht
     'host' => 'localhost',
     'driver' => 'pdo_pgsql',
 );` to the values chosen for your database.
+
 
 
 ## Testing
@@ -71,31 +100,6 @@ If you try to migrate again to the same version, it will just be ignored, but th
 **One very important thing to note is that this project uses the is_encrypted field to indicate if the relevant columns on the row are encrypted or not, so it shouldn't be changed outside of the migration or other encryption/decryption processes.**
 
 
-## Project structure
-* **src/Product.php** - Product entity mapped to the database through doctrine.
-* **services/ProductService.php** - Service to persist and retrieve products.
-* **services/EncryptionService.php** - Service that handles encryption/decryption and doctrine lifecycle callbacks.
-* **keyGeneration.php** - Script to be run only once to generate the encryption key used by encryption service.
-    * The `KeyFactory::save($encKey, 'test_key.key');` line determines the key filename and directory.
-    * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
-* **migrations.php** - Default migrations configuration and versions directory path.
-* **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
-* **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
-* **bootstrap.php** - "Main" script, that loads services, creates the database connection and registers the doctrine lifecycle events listener. 
-* **test_encrypted.php** - Test script that inserts a product with encrypted data into the database, receives its id and tries to retrieve that id. If working correctly, it should add a row to the table with encrypted address, retrieve it, and log that product with a plain text address.
-* **test_unencrypted.php** - Similar to the other test, but doesn't encrypt data. If working correctly, it should add a row to the table with plain text address, retrieve it, and log that product.
-
-
-## Project Overview
-This project uses Doctrine with the [ParagonIE Halite encryption library](https://github.com/paragonie/halite) to encrypt data in a PostgreSQL database:
-* **Database connection**: Uses Doctrine to connect with a PostgreSQL database.
-* **Entity management**: Sample entity where the address field is encrypted on the database. The `is_encrypted` field indicates the encryption status of the data.
-* **Key Management**: Uses `keyGeneration.php` to generate the encryption key, which should then be stored in a safe location and used in EncryptionService.php.
-* **Encryption/Decryption Process**: Happens during Doctrine lifecycle events.
-    * prePersist and preUpdate: encrypts address and sets is_encrypted to true.
-    * postLoad: decrypts address and sets is_encrypted to false in memory, so that it works correctly if later used to update the row.
-* **Migration process**: Uses Doctrine Migrations to manage migrations, encrypting/decrypting existing data in this case.
-
 
 ## Adapting to other contexts
 1. Adapt the database setup given earlier to your needs, changing the table as needed.
@@ -110,4 +114,3 @@ This project uses Doctrine with the [ParagonIE Halite encryption library](https:
     * In the same way, the down method should be changed to reverse the changes made in the up method (though this can be ignored if the reverse migration won't be used).
 7. **Remember that correct handling of the is_encrypted field is paramount for the functioning of this project, as incorrect handling of it could lead to crashes or double encryption.**
 8. Adapt test.php to your new entity to test the process.
-
