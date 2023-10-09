@@ -4,14 +4,16 @@ namespace App\Services;
 
 use GuzzleHttp\Client;
 
-class VaultService {
+class VaultService
+{
 
     private $client;
     private $vaultToken;
     private $roleName;
     private $roleId;
 
-    public function __construct(string $vaultAddress, string $vaultToken, string $roleName, string $roleId) {
+    public function __construct(string $vaultAddress, string $vaultToken, string $roleName, string $roleId)
+    {
         $this->client = new Client(['base_uri' => $vaultAddress]);
         $this->vaultToken = $vaultToken;
         $this->roleId = $roleId;
@@ -19,27 +21,25 @@ class VaultService {
     }
 
     /**
-     * Authenticates with Vault using AppRole, retrieves a token and sets it to the client.
+     * Authenticates with Vault using AppRole, retrieves a token and returns it.
      *
      * @return string The Vault token.
      */
-    private function authenticate(): void {
+    private function getAuthenticationToken(): string
+    {
         $response = $this->client->post('/v1/auth/approle/login', [
             'json' => [
                 'role_id' => $this->roleId,
                 'secret_id' => $this->generateSecretId()
             ]
         ]);
-    
+
         $body = json_decode((string)$response->getBody(), true);
-        $token = $body['auth']['client_token'];
-    
-        $config = $this->client->getConfig();
-        $config['headers']['X-Vault-Token'] = $token;
-        $this->client = new Client($config);
+        return $body['auth']['client_token'];
     }
 
-    public function generateSecretId(): string {
+    public function generateSecretId(): string
+    {
         $url = "/v1/auth/approle/role/{$this->roleName}/secret-id";
         try {
             $response = $this->client->post($url, [
@@ -62,10 +62,9 @@ class VaultService {
      * 
      * @return array The retrieved secret.
      */
-    public function getSecret(string $path): array {
-        $this->authenticate();
-        $response = $this->client->get($path);
-
+    public function getSecret(string $path): array
+    {
+        $response = $this->client->get($path, ['headers' => ['X-Vault-Token' => $this->getAuthenticationToken()]]);
         $body = json_decode((string) $response->getBody(), true);
         return $body['data']['data'];
     }
@@ -78,8 +77,14 @@ class VaultService {
      * 
      * @return int The HTTP status code.
      */
-    public function putSecret(string $path, array $data): int {
-        $this->authenticate();
-        return $this->client->put($path, ['json' => ['data' => $data]])->getStatusCode();
+    public function putSecret(string $path, array $data): int
+    {
+        return $this->client->put(
+            $path,
+            [
+                'json' => ['data' => $data],
+                'headers' => ['X-Vault-Token' => $this->getAuthenticationToken()]
+            ]
+        )->getStatusCode();
     }
 }
