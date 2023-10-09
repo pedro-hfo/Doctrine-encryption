@@ -106,14 +106,19 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
     * `vault policy write php_app_secrets vault-configs/php_app_secrets.hcl` - Policy that gives the app role we are going to create permission to manage the secrets in the secret/data/phpapp/ path
 
 * Enable AppRole: `vault auth enable approle`
-* Create a new app role called php_app that uses the php_app_secrets policy: `vault write auth/approle/role/php_app token_policies="php_app_secrets"`
-* Create a token to be used by the app to create a new secretId on demand: `vault token create -policy=manage_approle -orphan`
+* Create a new app role called php_app that uses the php_app_secrets policy: `vault write auth/approle/role/php_app token_policies="php_app_secrets" token_ttl=1m token_max_ttl=5m token_num_uses=1`
+    * The ttl, max_ttl and num_uses values can be changed, but this token is supposed to be one-time-only, so giving it more uses or more ttl may create a possible vulnerability
+
+* Create a token to be used by the app to create a new secretId on demand: `vault token create -policy=manage_approle -orphan -ttl=72h -explicit-max-ttl=72h -use-limit=10`
     * The orphan tag is so that the token isn't revoked when its parent (the initial root token in this case) is.
+    * The ttl, max-ttl and use-limit values can be changed as needed, and are here only as examples. [For more information on tokens](https://developer.hashicorp.com/vault/tutorials/tokens/tokens).
     * In the response there should be a line like `token                hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw`
     * Export this token as an environment variable on the session that will run the php scripts: `export VAULT_TOKEN=hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw`
+
 * Now retrieve the role_id, this can be done in two ways:
     * From the cli: `vault read auth/approle/role/php_app/role-id` 
     * Using a http request with the token retrieved earlier: `curl --header "X-Vault-Token: hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw"      $VAULT_ADDR/v1/auth/approle/role/php_app/role-id | jq -r ".data"`
+
 * In config.php, replace the roleId for the roleId returned in the last step.
 * Enable secrets on the secret path `vault secrets enable -path=secret kv`
 * Write the db connection values in db-secrets.json to vault: `vault write secret/data/phpapp/database-config @db-secrets.json`. If you change the vaultDbSecretsPath in config.php, remember to change this command accordingly.
