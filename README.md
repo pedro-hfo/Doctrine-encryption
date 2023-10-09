@@ -85,23 +85,25 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
 
 * Navigate to the tls folder and create a TLS certificate. There are various ways of doing that, for this test project, a self signed one was chosen.
     * `openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf`
-    * Edit the /etc/ca-certificates.conf file and add cert.crt (or whatever your certificate is named) on the bottom.
+    * Edit the `/etc/ca-certificates.conf` file and add cert.crt (or whatever your certificate is named) on the bottom.
     * Copy the certificate as .crt to /usr/share/ca-certificates/ `sudo cp cert.pem /usr/share/ca-certificates/cert.crt`
     * Update certificates `sudo update-ca-certificates`
 
 * Start a Vault server with the provided config.hcl `vault server -config=vault-configs/config.hcl`
     * If the tls certificates are renamed or stored in another location, make sure to reflect that change in config.hcl.
     * In the same way, you can change the path where Vault stores its data by changing the `storage "file"` value in config.hcl.
+    * **The paths inside config.hcl are relative to the session running the command and not to the path of the config.hcl file.**
+    * Vault by default tries to lock the process's memory to prevent it from being swapped to disk, this project disables that with the `disable_mlock = true` line on config.hcl, but this is not recommended in production. To enable it, remove that line and either run the vault server as a root user or follow [the documentation](https://developer.hashicorp.com/vault/docs/configuration#disable_mlock)
 
 * Now in another terminal session, export the vault address `export VAULT_ADDR='https://127.0.0.1:8200'`
 * The first time a server is started, it needs to be initialized with `vault operator init`
     * This command will return 5 unseal keys and a root token, both will be used in the next steps
 
-* [Unseal](https://developer.hashicorp.com/vault/docs/concepts/seal) the vault by running `vault operator unseal` three times with a different key each time.
+* [Unseal](https://developer.hashicorp.com/vault/docs/concepts/seal) the vault by running `vault operator unseal unseal_key` three times with a different key each.
 * Login as root with the root token from the previous step `vault login root_token`
 * Write the policies in the vault-policies folder
-    * `vault policy write manage_approle vault-policies/manage_approle.hcl` - Policy needed to create a secretId and check the roleId
-    * `vault policy write php_app_secrets vault-policies/php_app_secrets.hcl` - Policy that gives the app role we are going to create permission to manage the secrets in the secret/data/phpapp/ path
+    * `vault policy write manage_approle vault-configs/manage_approle.hcl` - Policy needed to create a secretId and check the roleId
+    * `vault policy write php_app_secrets vault-configs/php_app_secrets.hcl` - Policy that gives the app role we are going to create permission to manage the secrets in the secret/data/phpapp/ path
 
 * Enable AppRole: `vault auth enable approle`
 * Create a new app role called php_app that uses the php_app_secrets policy: `vault write auth/approle/role/php_app token_policies="php_app_secrets"`
