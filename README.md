@@ -34,10 +34,13 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
 * **src/Product.php** - Product entity mapped to the database through doctrine.
 * **services/ProductService.php** - Service to persist and retrieve products.
 * **services/EncryptionService.php** - Service that handles encryption/decryption and doctrine lifecycle callbacks.
-* **KeyManagementService.php** - Service that handles the cryptographic key. It tries to retrieve it from vault and, if it doesn't exist, generates a new one and saves it there
+* **services/KeyManagementService.php** - Service that handles the cryptographic key. It tries to retrieve it from vault and, if it doesn't exist, generates a new one and saves it there
     * The key path in vault is given when initializing this service
     * There are other [more advanced options](https://github.com/paragonie/halite/blob/master/doc/Basic.md) for encryption, such as encrypting/decrypting with associated data or asymmetric-key encryption, but the code would need to be changed accordingly.
-* **VaultService.php** - Service that uses GuzzleHTTP to request a secretId, authenticate using it and the roleId provided in configs and then retrieves or stores secrets.
+* **services/VaultService.php** - Service that uses GuzzleHTTP to request a secretId, authenticate using it and the roleId provided in configs and then retrieves or stores secrets.
+* **vault-configs/** - Folder for vault configuration files.
+* **vault-data/** - Folder where vault will store its data.
+* **tls/** - Folder to hold the openssl config file and store the tls certificates.
 * **migrations.php** - Default migrations configuration and versions directory path.
 * **migrations-db.php** - Database connection values for migrations, should be the same as the ones used by the project to connect to the DB.
 * **Migrations/VersionEncrypted.php** - Migration for encrypting/decrypting the address on all rows.
@@ -80,8 +83,22 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
     * `sudo apt update `
     * `sudo apt install vault`
 
-* And start a dev server: `vault server -dev`
-* Now in another terminal session, export the vault address `export VAULT_ADDR='http://127.0.0.1:8200'`
+* Navigate to the tls folder and create a TLS certificate. There are various ways of doing that, for this test project, a self signed one was chosen.
+    * `openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem -config openssl.cnf`
+    * Edit the /etc/ca-certificates.conf file and add cert.crt (or whatever your certificate is named) on the bottom.
+    * Copy the certificate as .crt to /usr/share/ca-certificates/ `sudo cp cert.pem /usr/share/ca-certificates/cert.crt`
+    * Update certificates `sudo update-ca-certificates`
+
+* Start a Vault server with the provided config.hcl `vault server -config=vault-configs/config.hcl`
+    * If the tls certificates are renamed or stored in another location, make sure to reflect that change in config.hcl.
+    * In the same way, you can change the path where Vault stores its data by changing the `storage "file"` value in config.hcl.
+
+* Now in another terminal session, export the vault address `export VAULT_ADDR='https://127.0.0.1:8200'`
+* The first time a server is started, it needs to be initialized with `vault operator init`
+    * This command will return 5 unseal keys and a root token, both will be used in the next steps
+
+* [Unseal](https://developer.hashicorp.com/vault/docs/concepts/seal) the vault by running `vault operator unseal` three times with a different key each time.
+* Login as root with the root token from the previous step `vault login root_token`
 * Write the policies in the vault-policies folder
     * `vault policy write manage_approle vault-policies/manage_approle.hcl` - Policy needed to create a secretId and check the roleId
     * `vault policy write php_app_secrets vault-policies/php_app_secrets.hcl` - Policy that gives the app role we are going to create permission to manage the secrets in the secret/data/phpapp/ path
@@ -95,6 +112,7 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
     * From the cli: `vault read auth/approle/role/php_app/role-id` 
     * Using a http request with the token retrieved earlier: `curl --header "X-Vault-Token: hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw"      $VAULT_ADDR/v1/auth/approle/role/php_app/role-id | jq -r ".data"`
 * In config.php, replace the roleId for the roleId returned in the last step.
+* Enable secrets on the secret path `vault secrets enable -path=secret kv`
 * Write the db connection values in db-secrets.json to vault: `vault write secret/data/phpapp/database-config @db-secrets.json`. If you change the vaultDbSecretsPath in config.php, remember to change this command accordingly.
 
 
