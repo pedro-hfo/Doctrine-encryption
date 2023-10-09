@@ -107,7 +107,8 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
 
 * Enable AppRole: `vault auth enable approle`
 * Create a new app role called php_app that uses the php_app_secrets policy: `vault write auth/approle/role/php_app token_policies="php_app_secrets"`
-* Create a token to be used by the app to create a new secretId on demand: `vault token create -policy=manage_approle`
+* Create a token to be used by the app to create a new secretId on demand: `vault token create -policy=manage_approle -orphan`
+    * The orphan tag is so that the token isn't revoked when its parent (the initial root token in this case) is.
     * In the response there should be a line like `token                hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw`
     * Export this token as an environment variable on the session that will run the php scripts: `export VAULT_TOKEN=hvs.CAESIBg6R-hBJqgVH1Ijs9bsWy3_JK4Q5pjnap3_kTnEhSbOGh4KHGh2cy5BS0Z6VHZGckhrR0RPaHdRalZoUEw4UGw`
 * Now retrieve the role_id, this can be done in two ways:
@@ -116,6 +117,9 @@ This project uses  [Doctrine](https://www.doctrine-project.org/) with the [Parag
 * In config.php, replace the roleId for the roleId returned in the last step.
 * Enable secrets on the secret path `vault secrets enable -path=secret kv`
 * Write the db connection values in db-secrets.json to vault: `vault write secret/data/phpapp/database-config @db-secrets.json`. If you change the vaultDbSecretsPath in config.php, remember to change this command accordingly.
+* Now everything is setup, but before testing, we should revoke the root token so as to not have a possible security risk (as anyone with the root token has complete access to Vault).
+    * Look for your root token's accessor id `vault token lookup your_root_token`
+    * Revoke the token with the value in the accessor field `vault token revoke -accessor accessor_id`
 
 
 
