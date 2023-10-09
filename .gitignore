@@ -1,2 +1,3 @@
 /vendor/
 /tls/*.pem
+/vault-data
